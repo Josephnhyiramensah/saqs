@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<claims>
+  <claim>
+    <claimID>260</claimID>
+    <claimCheckCode>12345</claimCheckCode>
+    <preAuthorizationCodes/>
+    <physicianID/>
+    <memberNo/>
+    <cardSerialNo/>
+    <surname>ANDAM</surname>
+    <otherNames>EKOW</otherNames>
+    <dateOfBirth>1990-02-14</dateOfBirth>
+    <gender>M</gender>
+    <hospitalRecNo>308/20</hospitalRecNo>
+    <isDependant/>
+    <typeOfService>OPD</typeOfService>
+    <isUnbundled>$tos</isUnbundled>
+    <includesPharmacy>$tos</includesPharmacy>
+    <typeOfAttendance>$tos</typeOfAttendance>
+    <serviceOutcome>$tos</serviceOutcome>
+    <dateOfService>$tos</dateOfService>
+    <dateOfService>$tos</dateOfService>
+    <specialtyAttended>$tos</specialtyAttended>
+    <procedure>
+      <serviceDate>2023-03-23</serviceDate>
+      <gdrgCode>ASUR20A</gdrgCode>
+      <icd10/>
+      <diagnosis>HERNIA REPAIR</diagnosis>
+    </procedure>
+    <diagnosis>
+      <gdrgCode>ASUR20A</gdrgCode>
+      <icd10>B54</icd10>
+      <diagnosis>Malaria</diagnosis>
+    </diagnosis>
+    <diagnosis>
+      <gdrgCode>ASUR20A</gdrgCode>
+      <icd10/>
+      <diagnosis>ANEAMIA</diagnosis>
+    </diagnosis>
+    <principalGDRG/>
+    <referralInfo>
+      <claimCheckCode/>
+      <facilityID/>
+      <facilityName/>
+    </referralInfo>
+  </claim>
+</claims>

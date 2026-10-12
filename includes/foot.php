@@ -1,0 +1,1 @@
+<p class="mt-5 mb-3 text-muted text-center">Copyright &copy; HealthNotes <?php echo date("Y");?></p>

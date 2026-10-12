@@ -1,0 +1,293 @@
+<?php 
+require_once($_SERVER['DOCUMENT_ROOT'] .'/includes/db.php');
+//CONTRA
+function save_contra()
+{
+    global $con;
+    $contra_id = $_POST['contra_id'];
+    $user_id = $_POST['contra_user_id'];
+    $user_super_id = $_POST['contra_user_super_id'];
+    $contra_debit_ledger = $_POST['contra_debit_ledger'];
+    $contra_credit_ledger = $_POST['contra_credit_ledger'];
+    $contra_ref = $_POST['contra_ref'];
+    $contra_date = $_POST['contra_date'];
+    $contra_amount = $_POST['contra_amount'];
+    $contra_mode = $_POST['contra_mode'];
+    $contra_inst_no = $_POST['contra_inst_no'];
+    $contra_bank = $_POST['contra_bank'];
+    $contra_branch = $_POST['contra_branch'];
+    $contra_name = $_POST['contra_name'];
+    $contra_narration = $_POST['contra_narration'];
+    $company_id = $_SESSION['company_id'];
+    $user_id = $_SESSION['user_id'];
+    $branch_id = $_SESSION['branch_id'];
+
+    $query_last_sno = "SELECT `sno` FROM `contra` WHERE `company_id` = '$company_id' ORDER BY `sno` DESC";
+    $result_last_sno = mysqli_query($con,$query_last_sno);
+    if(!empty($result_last_sno) && mysqli_num_rows($result_last_sno))
+    {
+        $row_last_sno = mysqli_fetch_assoc($result_last_sno);
+        $last_sno = $row_last_sno['sno'];
+        $next_sno = $last_sno + 1;
+    }
+    else
+    {
+        $next_sno = 1;
+    };
+
+    $query = "INSERT INTO `contra`(
+    `sno`,`company_id`, `user_id`, `user_super_id`, `ledger_debit`,`ledger_credit`, `date`, `amount`, `narration`, 
+    `reference_no`, `mode`, `bank`, `branch`, `inst_no`, `name`, `branch_id`, `created_by`, `created_datetime`) VALUES (
+    '$next_sno','$company_id','$user_id','$user_super_id','$contra_debit_ledger','$contra_credit_ledger','$contra_date','$contra_amount','$contra_narration',
+    '$contra_ref','$contra_mode','$contra_bank','$contra_branch','$contra_inst_no','$contra_name',
+    '$branch_id','$user_id',NOW())";
+    $query_run = mysqli_query($con, $query);
+    if ($query_run) 
+    {
+        //POST TRANSACTION
+            $query = "SELECT * FROM contra WHERE `company_id`='$company_id' ORDER BY contra_id DESC";
+            $result = mysqli_query($con,$query);
+            $row = mysqli_fetch_assoc($result);
+            $contra_id = $row['contra_id'];
+            $query_dr = "INSERT INTO `transactions`(
+            `contra_id`,`ledger_id`, `ledger_id_contra`, `company_id`, `user_id`, `user_super_id`, `date`, `amt`, 
+            `amt_debit`, `amt_credit`, `narration`, `branch_id`, `created_by`, `created_datetime`) VALUES (
+            '$contra_id','$contra_debit_ledger','$contra_credit_ledger','$company_id','$user_id','$user_super_id','$contra_date',
+            '$contra_amount','$contra_amount',0,'$contra_narration','$branch_id','$user_id',NOW())";
+            mysqli_query($con, $query_dr);
+
+            $query_cr = "INSERT INTO `transactions`(
+            `contra_id`,`ledger_id`, `ledger_id_contra`, `company_id`, `user_id`, `user_super_id`, `date`, `amt`, 
+            `amt_debit`, `amt_credit`, `narration`, `branch_id`, `created_by`, `created_datetime`) VALUES (
+            '$contra_id','$contra_credit_ledger','$contra_debit_ledger','$company_id','$user_id','$user_super_id','$contra_date',
+            '$contra_amount',0,'$contra_amount','$contra_narration','$branch_id','$user_id',NOW())";
+            mysqli_query($con, $query_cr);
+    };
+}
+
+function edit_contra()
+{
+    global $con;
+    $contra_id = $_POST['contra_id'];
+    $contra_details=array();
+    $query = "SELECT * FROM contra WHERE contra_id='$contra_id'";
+    $result = mysqli_query($con,$query);
+    while($row = mysqli_fetch_assoc($result))
+    {
+        array_push($contra_details, 
+            $row['user_super_id'],$row['contra_id'],$row['company_id'],$row['user_id'],$row['ledger_credit'],
+            $row['ledger_debit'],$row['name'],$row['date'],$row['amount'],$row['narration'],$row['reference_no'],
+            $row['mode'],$row['bank'],$row['branch'],$row['inst_no']
+        );
+    }
+     echo json_encode($contra_details);
+}
+
+function update_contra()
+{
+    global $con;
+    $contra_id = $_POST['contra_id'];
+    $company_id = $_POST['company_id'];
+    $user_id = $_POST['user_id'];
+    $user_super_id = $_POST['user_super_id'];
+    $contra_debit_ledger = $_POST['contra_debit_ledger'];
+    $contra_credit_ledger = $_POST['contra_credit_ledger'];
+    $contra_ref = $_POST['contra_ref'];
+    $contra_date = $_POST['contra_date'];
+    $contra_amount = $_POST['contra_amount'];
+    $contra_mode = $_POST['contra_mode'];
+    $contra_inst_no = $_POST['contra_inst_no'];
+    $contra_bank = $_POST['contra_bank'];
+    $contra_branch = $_POST['contra_branch'];
+    $contra_name = $_POST['contra_name'];
+    $contra_narration = $_POST['contra_narration'];
+    $company_id = $_SESSION['company_id'];
+    $user_id = $_SESSION['user_id'];
+    $branch_id = $_SESSION['branch_id'];
+
+    $query = "UPDATE `contra` SET
+        `company_id`='$company_id', `user_id`='$user_id', `user_super_id`='$user_super_id', `ledger_debit`='$contra_debit_ledger', 
+        `ledger_credit`='$contra_credit_ledger', `date`='$contra_date', `amount`='$contra_amount', `narration`='$contra_narration', 
+        `reference_no`='$contra_ref', `mode`='$contra_mode', `bank`='$contra_bank', `branch`='$contra_branch', `inst_no`='$contra_inst_no', 
+        `name`='$contra_name',`altered_by`='$user_id',`altered_datetime`=NOW() WHERE `contra_id`='$contra_id'";
+        $query_run = mysqli_query($con, $query);
+
+        if ($query_run) 
+        {
+
+            //POST TRANSACTION
+                $query = "DELETE FROM transactions WHERE `contra_id`='$contra_id'";
+                $result = mysqli_query($con,$query);
+
+                $query_dr = "INSERT INTO `transactions`(
+                `contra_id`,`ledger_id`, `ledger_id_contra`, `company_id`, `user_id`, `user_super_id`, `date`, `amt`, 
+                `amt_debit`, `amt_credit`, `narration`, `branch_id`, `created_by`, `created_datetime`) VALUES (
+                '$contra_id','$contra_debit_ledger','$contra_credit_ledger','$company_id','$user_id','$user_super_id','$contra_date',
+                '$contra_amount','$contra_amount',0,'$contra_narration','$branch_id','$user_id',NOW())";
+                mysqli_query($con, $query_dr);
+
+                $query_cr = "INSERT INTO `transactions`(
+                `contra_id`,`ledger_id`, `ledger_id_contra`, `company_id`, `user_id`, `user_super_id`, `date`, `amt`, 
+                `amt_debit`, `amt_credit`, `narration`, `branch_id`, `created_by`, `created_datetime`) VALUES (
+                '$contra_id','$contra_credit_ledger','$contra_debit_ledger','$company_id','$user_id','$user_super_id','$contra_date',
+                '$contra_amount',0,'$contra_amount','$contra_narration','$branch_id','$user_id',NOW())";
+                mysqli_query($con, $query_cr);
+
+        }
+}
+
+function search_contra_by_name()
+{
+    global $con;
+    $purchase_search_name = $_POST['purchase_search_name'];
+    $company_id = $_POST['company_id'];
+    $value = "";
+
+    $query = "SELECT * FROM purchases WHERE company_id = '$company_id' AND supplier	LIKE '%".$purchase_search_name."%' ORDER BY date ASC";
+    $query_run = mysqli_query($con, $query);
+
+    $value = '<div class="table-responsive" id="purchases_list_table">
+        <table class="table table-hover table-bordered table-sm" id="purchasesTable" width="100%" cellspacing="0">
+            <thead>
+                <tr>
+                    <th class = "action-td" width="5%">No</th>
+                    <th class = "action-td" width="10%">Date</th>
+                    <th width="20%">Paying Ledger</th>
+                    <th width="10%">Supplied By</th>
+                    <th class = "action-td" width="10%">Grams</th>
+                    <th class = "action-td" width="10%">Water</th>
+                    <th class = "action-td" width="10%">Price</th>
+                    <th class = "action-td" width="5%">Karat</th>
+                    <th class = "action-td" width="10%">Amount</th>
+                    <th class = "action-td" width="10%">Action</th>
+                </tr>
+            </thead>
+            <tbody class="pv-table-body">';
+                
+                    if (mysqli_num_rows($query_run) > 0)
+                    {
+                        while($row = mysqli_fetch_assoc($query_run))
+                        {
+                            $ledger_cr = $row['ledger_credit'];
+                            $query_ledger = "SELECT * FROM ledgers WHERE ledger_id ='$ledger_cr'";
+                            $query_ledger_run = mysqli_query($con, $query_ledger);
+                            $row_ledger = mysqli_fetch_assoc($query_ledger_run);
+               
+                   $value.='<tr>
+                                <td class = "action-td">
+                                    <a href="#" id="btn_edit_purchase" data-id="'.$row['purchase_id'].'">'.$row['purchase_id'].'</a>
+                                </td>
+                                <td class = "action-td">'.$row['date'].'</td>
+                                <td>'.$row_ledger['ledger_desc'].'</td>
+                                <td>'.$row['supplier'].'</td>
+                                <td class = "action-td">'.$row['weight'].'</td>
+                                <td class = "action-td">'.$row['water'].'</td>';
+                                
+                                    $price_purchase = $row['price'];
+                                    $price_purchase = number_format($price_purchase, 2, '.', ',');
+                                
+                       $value.='<td class = "action-td">'.$price_purchase.'</td>
+                                <td class = "action-td">'.$row['karat'].'</td>';
+                                
+                                    $amount_purchase = $row['amount'];
+                                    $amount_purchase = number_format($amount_purchase, 2, '.', ',');
+                                
+                       $value.='<td class = "amt-td">'.$amount_purchase.'</td>
+                                <td class = "action-td">
+                                    <a href="#" id="btn_edit_purchase" data-id="'.$row['purchase_id'].'">Edit</a>
+                                    |
+                                    <a href="#" id="btn_delete_purchase" data-id="'.$row['purchase_id'].'">Delete</a>
+                                </td>
+                            </tr>';
+                
+                        }
+                    }
+                    else
+                    {
+                            $value.='No Purchases Not Found';
+                    };
+                
+            $value.='</tbody>
+        </table>
+    </div>';
+    echo $value;
+}
+
+function search_contra_by_date()
+{
+    global $con;
+    $start_date = $_POST['start_date'];
+    $end_date = $_POST['end_date'];
+    $company_id = $_POST['company_id'];
+    $value = "";
+
+    $query = "SELECT * FROM contra WHERE date BETWEEN '$start_date' AND '$end_date' AND  company_id = '$company_id' ORDER BY date ASC";
+    $query_run = mysqli_query($con, $query);
+        
+    $value = '<div class="table-responsive" id="contra_list_table">
+        <table class="table table-hover table-bordered table-sm" id="contraTable" width="100%" cellspacing="0">
+            <thead>
+                <tr>
+                    <th width="10%" class="action-td">Contra No</th>
+                    <th width="10%" class="action-td">Date</th>
+                    <th width="20%">Debit Ledger</th>
+                    <th width="20%">Credit Ledger</th>
+                    <th width="10%">Amount</th>
+                    <th width="25%">Narration</th>
+                    <th width="5%" class="action-td">Action</th>
+                </tr>
+            </thead>
+            <tbody class="pv-table-body">';
+                
+                    if (mysqli_num_rows($query_run) > 0)
+                    {
+                        while($row = mysqli_fetch_assoc($query_run))
+                        {
+                            $ledger_id_dr = $row['ledger_debit'];
+                            $query_ledger_dr = "SELECT * FROM ledgers WHERE ledger_id ='$ledger_id_dr'";
+                            $query_run_ledger_dr = mysqli_query($con,$query_ledger_dr);
+                            $row_ledger_dr = mysqli_fetch_array($query_run_ledger_dr);
+
+                            $ledger_id = $row['ledger_credit'];
+                            $query_ledger="SELECT * FROM ledgers WHERE ledger_id ='$ledger_id'";
+                            $query_run_ledger = mysqli_query($con,$query_ledger);
+                            $row_ledger = mysqli_fetch_array($query_run_ledger);
+
+                            $contra_amount = $row['amount'];
+                            $contra_amount = number_format($contra_amount, 2, '.', ',');
+               
+                   $value.='<tr>
+                                <td class="action-td">'.$row['sno'].'</td>
+                                <td class="action-td">'.$row['date'].'</td>
+                                <td>'.$row_ledger_dr['ledger_desc'].'</td>
+                                <td>'.$row_ledger['ledger_desc'].'</td>
+                                <td class="amt-td">'.$contra_amount.'</td>
+                                <td>'.$row['narration'].'</td>
+                                <td class="action-td">';
+                                    if ($_SESSION['user_type'] == 'Ultra_Super_User' OR $_SESSION['user_type'] == 'Super_User' OR ($_SESSION['user_type'] == 'Normal_User' AND $_SESSION['Edit_Contra'] == 'Yes')) 
+                                      {
+                                        $value.='<a href="#" id="btn_edit_contra" data-id="'.$row['contra_id'].'"><i class="fa fa-edit fa-sm"></i></a> |';
+                                      };
+
+                                      $value.='<a href="#" id="btn_contra_reprint" data-id="'.$row['contra_id'].'"><i class="fa fa-print fa-sm"></i></a>';
+
+                                      if ($_SESSION['user_type'] == 'Ultra_Super_User' OR $_SESSION['user_type'] == 'Super_User' OR ($_SESSION['user_type'] == 'Normal_User' AND $_SESSION['Delete_Contra'] == 'Yes'))
+                                      {
+                                        $value.='| <a href="#" id="btn_delete_contra" data-id2="'.$row['contra_id'].'"><i class="fa fa-trash fa-sm"></i></a>';
+                                      };
+                                $value.='</td>
+                            </tr>';
+                        }
+                    }
+                    else
+                    {
+                            $value.='No Contra Voucher Not Found';
+                    };
+                
+            $value.='</tbody>
+        </table>
+    </div>';
+    echo $value;
+}
+
+?>
