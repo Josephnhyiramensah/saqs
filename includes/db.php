@@ -113,14 +113,29 @@ class Session
 $ses = new Session();
 $ses->start_session();
 //session_start();
-$con = mysqli_connect($_ENV["DB_URL"], $_ENV["DB_USER"], $_ENV["DB_PASS"],"saqs");
-//$con = mysqli_connect("localhost","root","","saqs");
+// --- Database connection -------------------------------------------------
+// Read config from real environment variables. getenv() works regardless of
+// the server's `variables_order` setting; $_ENV is often empty on AWS /
+// Elastic Beanstalk, which silently breaks the old $_ENV[...] version.
+// Falls back to local dev defaults when the env vars are not set.
+    $db_host = getenv('DB_URL')  ?: 'localhost';
+    $db_user = getenv('DB_USER') ?: 'root';
+    $db_pass = getenv('DB_PASS') ?: '';
+    $db_name = 'saqs';
 
-// Check connection
-  if (mysqli_connect_errno())
-  {
-    echo "Failed to connect to MySQL: " . mysqli_connect_error();
-  }
+// Handle connection errors ourselves instead of letting PHP 8 throw a raw 500.
+    mysqli_report(MYSQLI_REPORT_OFF);
+
+    $con = mysqli_init();
+// 5-second cap so a wrong/firewalled host fails fast instead of hanging ~2 min.
+    mysqli_options($con, MYSQLI_OPT_CONNECT_TIMEOUT, 5);
+
+    if (!@mysqli_real_connect($con, $db_host, $db_user, $db_pass, $db_name))
+    {
+        error_log('DB connect failed: ' . mysqli_connect_error());
+        http_response_code(503);
+        die('Database connection error. Please try again later.');
+    }
 
 //DOB
     function age($dob)
